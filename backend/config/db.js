@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const connectDB = async () => {
+  // If already connected, use the existing connection
+  if (mongoose.connection.readyState >= 1) {
+    console.log('MongoDB: Using existing database connection');
+    return;
+  }
+
   try {
     const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/tracker';
     const isAtlas = mongoUri.includes('mongodb+srv://');

@@ -19,8 +19,24 @@
             "dest": "backend/server.js"
         },
         {
+            "src": "/assets/(.*)",
+            "dest": "frontend/assets/$1"
+        },
+        {
+            "src": "/cplogo.png",
+            "dest": "frontend/cplogo.png"
+        },
+        {
+            "src": "/favicon.ico",
+            "dest": "frontend/favicon.ico"
+        },
+        {
+            "src": "/favicon.png",
+            "dest": "frontend/favicon.png"
+        },
+        {
             "src": "/(.*)",
-            "dest": "frontend/$1"
+            "dest": "frontend/index.html"
         }
     ]
 }
