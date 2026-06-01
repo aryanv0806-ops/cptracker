@@ -24,7 +24,12 @@ router.post('/register', async (req, res) => {
     res.status(201).json({ token, user: { id: user._id, username, email, profilePic: user.profilePic, handles: user.handles, stats: user.stats, submissionHistory: user.submissionHistory } });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error during registration' });
+    const isDbError = err.name === 'MongooseServerSelectionError' || err.message?.includes('connect') || err.message?.includes('buffering');
+    res.status(500).json({ 
+      message: isDbError 
+        ? 'Database connection failed. Please ensure your MongoDB Atlas IP whitelist (0.0.0.0/0) and env variables are correctly configured in Vercel settings.' 
+        : 'Server error during registration' 
+    });
   }
 });
 
@@ -45,7 +50,12 @@ router.post('/login', async (req, res) => {
     res.json({ token, user: { id: user._id, username: user.username, email: user.email, profilePic: user.profilePic, handles: user.handles, stats: user.stats, submissionHistory: user.submissionHistory } });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error during login' });
+    const isDbError = err.name === 'MongooseServerSelectionError' || err.message?.includes('connect') || err.message?.includes('buffering');
+    res.status(500).json({ 
+      message: isDbError 
+        ? 'Database connection failed. Please ensure your MongoDB Atlas IP whitelist (0.0.0.0/0) and env variables are correctly configured in Vercel settings.' 
+        : 'Server error during login' 
+    });
   }
 });
 
