@@ -1,6 +1,6 @@
 # CP Tracker - Coding Platform Tracker
 
-👉 **Live Demo (Vercel)**: [https://coding-platform-tracker.vercel.app](https://coding-platform-tracker.vercel.app)
+👉 **Live Demo (Vercel)**: https://cp-tracker-mu.vercel.app/
 
 CP Tracker is a premium, modern fullstack dashboard application that aggregates and tracks user metrics across popular competitive programming platforms including **LeetCode**, **CodeChef**, and **Codeforces**. Designed with sleek skeuomorphic/neumorphic aesthetics, the app supports active light and dark themes, submission streaks, interactive widgets, and platform-specific heatmaps.
 
