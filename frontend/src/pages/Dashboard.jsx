@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import PlatformCard from '../components/PlatformCard';
@@ -104,7 +104,71 @@ export default function Dashboard() {
 
   const { current: currentStreak, max: maxStreak } = calculateStreak(user?.submissionHistory || []);
 
+  // Fire Particles cursor effect
+  const [particles, setParticles] = useState([]);
+  const lastPosRef = useRef({ x: 0, y: 0 });
 
+  const getRandomFireColor = () => {
+    const r = Math.floor(Math.random() * 55) + 200; // 200-255 (Red)
+    const g = Math.floor(Math.random() * 155) + 50;  // 50-205 (Green)
+    const b = Math.floor(Math.random() * 50);        // 0-50 (Blue)
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+
+  const handleMouseMove = (e) => {
+    const card = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - card.left;
+    const y = e.clientY - card.top;
+
+    const dx = x - lastPosRef.current.x;
+    const dy = y - lastPosRef.current.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < 6) return; // distance throttle
+    lastPosRef.current = { x, y };
+
+    const count = Math.min(8, Math.ceil(currentStreak / 3));
+    if (count === 0) return;
+
+    const newParticles = [];
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.random() * 40 - 20) * Math.PI / 180 - Math.PI / 2; // mostly upwards
+      const speed = Math.random() * (currentStreak * 0.05 + 1.5) + 0.5;
+      newParticles.push({
+        id: Math.random() + Date.now(),
+        x,
+        y,
+        vx: Math.cos(angle) * speed + (Math.random() * 0.6 - 0.3),
+        vy: Math.sin(angle) * speed,
+        size: Math.random() * (Math.min(25, currentStreak * 0.4 + 4)) + 3,
+        color: getRandomFireColor(),
+        alpha: 1.0,
+        life: 1.0
+      });
+    }
+    setParticles(prev => [...prev, ...newParticles].slice(-60));
+  };
+
+  useEffect(() => {
+    if (particles.length === 0) return;
+
+    const interval = setInterval(() => {
+      setParticles(prev =>
+        prev
+          .map(p => ({
+            ...p,
+            x: p.x + p.vx,
+            y: p.y + p.vy,
+            life: p.life - 0.06, // decay rate
+            alpha: p.life - 0.06,
+            size: Math.max(0, p.size - 0.4)
+          }))
+          .filter(p => p.life > 0 && p.size > 0)
+      );
+    }, 30);
+
+    return () => clearInterval(interval);
+  }, [particles]);
 
   return (
     <div className="min-h-screen bg-skeuo-bg py-8 px-4 sm:px-6 lg:px-8">
@@ -125,22 +189,46 @@ export default function Dashboard() {
             </div>
           </SkeuoCard>
 
-          <SkeuoCard className="flex items-center gap-5 p-6">
-            <div className="p-4 rounded-2xl skeuo-sunken text-orange-500">
+          <SkeuoCard 
+            className="flex items-center gap-5 p-6 relative overflow-visible select-none cursor-default"
+            onMouseMove={handleMouseMove}
+          >
+            {/* Fire Particles */}
+            {particles.map(p => (
+              <div
+                key={p.id}
+                className="absolute pointer-events-none rounded-full"
+                style={{
+                  left: p.x,
+                  top: p.y,
+                  width: p.size,
+                  height: p.size,
+                  transform: 'translate(-50%, -50%)',
+                  backgroundColor: p.color,
+                  opacity: p.alpha,
+                  filter: `blur(${p.size / 5}px)`,
+                  boxShadow: `0 0 ${p.size * 1.5}px ${p.color}`,
+                  zIndex: 50,
+                  transition: 'opacity 25ms linear, transform 25ms linear'
+                }}
+              />
+            ))}
+
+            <div className="p-4 rounded-2xl skeuo-sunken text-orange-500 z-10 relative">
               <Flame size={28} className="glow-red" />
             </div>
-            <div>
+            <div className="z-10 relative">
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Submission Streak</p>
               <h2 className="text-3xl font-black text-slate-800 dark:text-slate-200 mt-1">{currentStreak} {currentStreak === 1 ? 'Day' : 'Days'}</h2>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Max Streak: {maxStreak} {maxStreak === 1 ? 'day' : 'days'}</p>
             </div>
           </SkeuoCard>
 
-          <SkeuoCard className="flex items-center justify-center p-2.5 overflow-hidden">
+          <SkeuoCard className="flex items-center justify-center p-2 overflow-hidden h-full">
             <img 
               src="https://media1.tenor.com/m/UIhGo3CFbxsAAAAC/anime-happy.gif" 
               alt="Proud of you!" 
-              className="h-20 rounded-xl object-contain drop-shadow-[0_0_8px_rgba(244,143,143,0.3)]"
+              className="h-24 rounded-xl object-contain drop-shadow-[0_0_12px_rgba(244,143,143,0.4)]"
             />
           </SkeuoCard>
         </div>
