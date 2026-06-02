@@ -5,7 +5,7 @@ import PlatformCard from '../components/PlatformCard';
 import Heatmap from '../components/Heatmap';
 import SkeuoCard from '../components/SkeuoCard';
 import UpcomingContests from '../components/UpcomingContests';
-import { Code2, BarChart2, Flame } from 'lucide-react';
+import { Code2, Flame } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, connectPlatform, disconnectPlatform } = useContext(AuthContext);
@@ -104,12 +104,7 @@ export default function Dashboard() {
 
   const { current: currentStreak, max: maxStreak } = calculateStreak(user?.submissionHistory || []);
 
-  const ratings = [];
-  if (user?.handles?.codechef && user?.stats?.codechef?.rating) ratings.push(user.stats.codechef.rating);
-  if (user?.handles?.codeforces && user?.stats?.codeforces?.rating) ratings.push(user.stats.codeforces.rating);
-  const avgRating = ratings.length > 0 
-    ? Math.round(ratings.reduce((a, b) => a + b, 0) / ratings.length) 
-    : null;
+
 
   return (
     <div className="min-h-screen bg-skeuo-bg py-8 px-4 sm:px-6 lg:px-8">
@@ -141,17 +136,12 @@ export default function Dashboard() {
             </div>
           </SkeuoCard>
 
-          <SkeuoCard className="flex items-center gap-5 p-6">
-            <div className="p-4 rounded-2xl skeuo-sunken text-yellow-500">
-              <BarChart2 size={28} className="glow-yellow" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Average Rating</p>
-              <h2 className="text-3xl font-black text-slate-800 dark:text-slate-200 mt-1">
-                {avgRating !== null ? `${avgRating}` : 'N/A'}
-              </h2>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Competitive platforms</p>
-            </div>
+          <SkeuoCard className="flex items-center justify-center p-2.5 overflow-hidden">
+            <img 
+              src="https://media1.tenor.com/m/UIhGo3CFbxsAAAAC/anime-happy.gif" 
+              alt="Proud of you!" 
+              className="h-20 rounded-xl object-contain drop-shadow-[0_0_8px_rgba(244,143,143,0.3)]"
+            />
           </SkeuoCard>
         </div>
 
