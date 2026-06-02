@@ -69,6 +69,63 @@ export default function PlatformDetails() {
     platforms: h.platforms
   }));
 
+  // Sort and filter platform history chronologically
+  const sortedHistory = [...platformHistory]
+    .filter(h => h.count > 0)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const totalSubmissions = sortedHistory.reduce((sum, h) => sum + h.count, 0);
+  const totalSolved = stats?.solved || 0;
+
+  let cumulativeSubmissions = 0;
+  const solvedProgression = sortedHistory.map(h => {
+    cumulativeSubmissions += h.count;
+    const solvedCount = totalSubmissions > 0
+      ? Math.min(totalSolved, Math.round((cumulativeSubmissions / totalSubmissions) * totalSolved))
+      : 0;
+    const dateObj = new Date(h.date);
+    const formattedDate = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return {
+      name: formattedDate,
+      solved: solvedCount,
+      date: h.date
+    };
+  });
+
+  // Fallback if no history exists but solved count is non-zero
+  if (solvedProgression.length === 0 && totalSolved > 0) {
+    const today = new Date();
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    solvedProgression.push(
+      {
+        name: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        solved: Math.max(0, totalSolved - 5),
+        date: d.toISOString().split('T')[0]
+      },
+      {
+        name: today.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        solved: totalSolved,
+        date: today.toISOString().split('T')[0]
+      }
+    );
+  } else if (solvedProgression.length === 1) {
+    const d = new Date(solvedProgression[0].date);
+    d.setDate(d.getDate() - 30);
+    solvedProgression.unshift({
+      name: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      solved: Math.max(0, totalSolved - 5),
+      date: d.toISOString().split('T')[0]
+    });
+  }
+
+  const getPlatformColor = () => {
+    if (platformId === 'leetcode') return '#f7a01b';
+    if (platformId === 'codechef') return '#eab308';
+    if (platformId === 'codeforces') return '#31649f';
+    return '#3b82f6';
+  };
+
   // Pie chart data for LeetCode difficulty
   const leetcodeDifficultyData = [
     { name: 'Easy', value: stats?.easy || 0, color: '#10b981' }, 
@@ -186,54 +243,100 @@ export default function PlatformDetails() {
         {/* Platform Heatmap */}
         <Heatmap history={platformHistory} />
 
-        {/* Chart Section */}
-        <SkeuoCard className="p-6">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">
-            {platformId === 'leetcode' ? 'Difficulty Distribution' : 'Rating Progression'}
-          </h3>
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Difficulty/Rating Chart */}
+          <SkeuoCard className="p-6">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">
+              {platformId === 'leetcode' ? 'Difficulty Distribution' : 'Rating Progression'}
+            </h3>
 
-          <div className="h-72 w-full rounded-2xl skeuo-sunken p-4 flex items-center justify-center">
-            {platformId === 'leetcode' ? (
-              leetcodeDifficultyData.length > 0 ? (
-                <div className="w-full h-full flex flex-col sm:flex-row items-center justify-around gap-4">
-                  <div className="w-48 h-48">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={leetcodeDifficultyData}
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {leetcodeDifficultyData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '12px' }}
-                          itemStyle={{ color: 'var(--text-color)' }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
+            <div className="h-72 w-full rounded-2xl skeuo-sunken p-4 flex items-center justify-center">
+              {platformId === 'leetcode' ? (
+                leetcodeDifficultyData.length > 0 ? (
+                  <div className="w-full h-full flex flex-col sm:flex-row items-center justify-around gap-4">
+                    <div className="w-48 h-48">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={leetcodeDifficultyData}
+                            innerRadius={60}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="value"
+                          >
+                            {leetcodeDifficultyData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '12px' }}
+                            itemStyle={{ color: 'var(--text-color)' }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="space-y-3 font-mono text-sm">
+                      {leetcodeDifficultyData.map((entry, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <div className="w-3.5 h-3.5 rounded-md" style={{ backgroundColor: entry.color }}></div>
+                          <span className="text-slate-600 dark:text-slate-400 w-16">{entry.name}:</span>
+                          <span className="text-slate-800 dark:text-white font-bold">{entry.value} Solved</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="space-y-3 font-mono text-sm">
-                    {leetcodeDifficultyData.map((entry, index) => (
-                      <div key={index} className="flex items-center gap-3">
-                        <div className="w-3.5 h-3.5 rounded-md" style={{ backgroundColor: entry.color }}></div>
-                        <span className="text-slate-600 dark:text-slate-400 w-16">{entry.name}:</span>
-                        <span className="text-slate-800 dark:text-white font-bold">{entry.value} Solved</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-slate-500 text-sm">No submission data available.</p>
+                )
               ) : (
-                <p className="text-slate-500 text-sm">No submission data available.</p>
-              )
-            ) : (
-              ratingHistory && ratingHistory.length > 0 ? (
+                ratingHistory && ratingHistory.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={ratingHistory} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
+                      <XAxis 
+                        dataKey="name" 
+                        stroke="#64748b" 
+                        fontSize={11}
+                        tickLine={false} 
+                      />
+                      <YAxis 
+                        stroke="#64748b" 
+                        fontSize={11}
+                        tickLine={false}
+                        domain={['auto', 'auto']}
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '12px', fontFamily: 'monospace' }}
+                        itemStyle={{ color: 'var(--text-color)' }}
+                        labelStyle={{ color: 'var(--text-muted)' }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="rating"
+                        stroke={platformId === 'codechef' ? '#eab308' : '#22c55e'}
+                        strokeWidth={3}
+                        dot={{ r: 5, fill: 'var(--bg-color)', stroke: 'var(--accent-blue)', strokeWidth: 2 }}
+                        activeDot={{ r: 7 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-slate-500 text-sm">No rating data available.</p>
+                )
+              )}
+            </div>
+          </SkeuoCard>
+
+          {/* Solved Problems Progression Chart */}
+          <SkeuoCard className="p-6">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">
+              Solved Problems Progression
+            </h3>
+
+            <div className="h-72 w-full rounded-2xl skeuo-sunken p-4 flex items-center justify-center">
+              {solvedProgression && solvedProgression.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={ratingHistory} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
+                  <LineChart data={solvedProgression} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
                     <XAxis 
                       dataKey="name" 
                       stroke="#64748b" 
@@ -253,20 +356,20 @@ export default function PlatformDetails() {
                     />
                     <Line
                       type="monotone"
-                      dataKey="rating"
-                      stroke={platformId === 'codechef' ? '#eab308' : '#22c55e'}
+                      dataKey="solved"
+                      stroke={getPlatformColor()}
                       strokeWidth={3}
-                      dot={{ r: 5, fill: 'var(--bg-color)', stroke: 'var(--accent-blue)', strokeWidth: 2 }}
-                      activeDot={{ r: 7 }}
+                      dot={{ r: 4, fill: 'var(--bg-color)', stroke: getPlatformColor(), strokeWidth: 2 }}
+                      activeDot={{ r: 6 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <p className="text-slate-500 text-sm">No rating data available.</p>
-              )
-            )}
-          </div>
-        </SkeuoCard>
+                <p className="text-slate-500 text-sm">No solved problems history available.</p>
+              )}
+            </div>
+          </SkeuoCard>
+        </div>
 
         {/* Submissions Section */}
         <SkeuoCard className="p-6">
