@@ -127,20 +127,21 @@ export default function Dashboard() {
     if (dist < 6) return; // distance throttle
     lastPosRef.current = { x, y };
 
-    const count = Math.min(8, Math.ceil(currentStreak / 3));
-    if (count === 0) return;
+    // Minimum 1 emoji spawned, scales up with streak days
+    const count = Math.min(6, Math.ceil(currentStreak / 4) + 1);
 
     const newParticles = [];
     for (let i = 0; i < count; i++) {
-      const angle = (Math.random() * 40 - 20) * Math.PI / 180 - Math.PI / 2; // mostly upwards
-      const speed = Math.random() * (currentStreak * 0.05 + 1.5) + 0.5;
+      const vx = (Math.random() * 2 - 1) * (currentStreak * 0.05 + 1.2);
+      const vy = -Math.random() * (currentStreak * 0.06 + 2) - 1.2;
+      const size = Math.random() * (Math.min(24, currentStreak * 0.4 + 8)) + 14;
       newParticles.push({
         id: Math.random() + Date.now(),
         x,
         y,
-        vx: Math.cos(angle) * speed + (Math.random() * 0.6 - 0.3),
-        vy: Math.sin(angle) * speed,
-        size: Math.random() * (Math.min(25, currentStreak * 0.4 + 4)) + 3,
+        vx,
+        vy,
+        size,
         color: getRandomFireColor(),
         alpha: 1.0,
         life: 1.0
@@ -178,7 +179,7 @@ export default function Dashboard() {
 
         {/* Global Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <SkeuoCard className="flex items-center gap-5 p-6">
+          <SkeuoCard className="flex items-center gap-5 p-6 min-h-[140px]">
             <div className="p-4 rounded-2xl skeuo-sunken text-blue-500">
               <Code2 size={28} className="glow-blue" />
             </div>
@@ -190,28 +191,27 @@ export default function Dashboard() {
           </SkeuoCard>
 
           <SkeuoCard 
-            className="flex items-center gap-5 p-6 relative overflow-visible select-none cursor-default"
+            className="flex items-center gap-5 p-6 relative overflow-visible select-none cursor-default min-h-[140px]"
             onMouseMove={handleMouseMove}
           >
-            {/* Fire Particles */}
+            {/* Fire Emojis */}
             {particles.map(p => (
-              <div
+              <span
                 key={p.id}
-                className="absolute pointer-events-none rounded-full"
+                className="absolute pointer-events-none select-none text-center"
                 style={{
                   left: p.x,
                   top: p.y,
-                  width: p.size,
-                  height: p.size,
+                  fontSize: `${p.size}px`,
                   transform: 'translate(-50%, -50%)',
-                  backgroundColor: p.color,
                   opacity: p.alpha,
-                  filter: `blur(${p.size / 5}px)`,
-                  boxShadow: `0 0 ${p.size * 1.5}px ${p.color}`,
                   zIndex: 50,
+                  filter: `drop-shadow(0 0 ${p.size / 3}px ${p.color})`,
                   transition: 'opacity 25ms linear, transform 25ms linear'
                 }}
-              />
+              >
+                🔥
+              </span>
             ))}
 
             <div className="p-4 rounded-2xl skeuo-sunken text-orange-500 z-10 relative">
@@ -224,11 +224,11 @@ export default function Dashboard() {
             </div>
           </SkeuoCard>
 
-          <SkeuoCard className="flex items-center justify-center p-2 overflow-hidden h-full">
+          <SkeuoCard className="flex items-center justify-center p-2 overflow-hidden min-h-[140px]">
             <img 
               src="https://media1.tenor.com/m/UIhGo3CFbxsAAAAC/anime-happy.gif" 
               alt="Proud of you!" 
-              className="h-24 rounded-xl object-contain drop-shadow-[0_0_12px_rgba(244,143,143,0.4)]"
+              className="h-[120px] rounded-xl object-contain drop-shadow-[0_0_15px_rgba(244,143,143,0.5)]"
             />
           </SkeuoCard>
         </div>
